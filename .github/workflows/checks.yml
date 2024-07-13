@@ -1,10 +1,9 @@
----
 name: Checks
 
 on: [push]
 
 jobs:
-  test-link:
+  test-lint:
     name: Test and lint
     runs-on: ubuntu-20.04
     steps:
@@ -13,9 +12,23 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USER }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v2
-      - name: Test
-        run: docker-compose run --rm app sh -c "python manage.py test"
-      - name: Lint
-        run: docker-compose run --rm app sh -c "flake8"
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.9"
+      - name: Install dependencies
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Run tests
+        run: |
+          source venv/bin/activate
+          python manage.py test
+      - name: Run linter
+        run: |
+          source venv/bin/activate
+          flake8 .
